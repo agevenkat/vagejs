@@ -55,7 +55,7 @@ Brand (vagejs), npm name (`vagejs`), CLI (`vage`), repo name and domain remain s
 - **`vage info --json`** is generated from the live cac command list and the Zod schemas (`z.toJSONSchema`), so it cannot drift. Field docs live in `.describe()` on the schemas.
 - **Generated projects** get `AGENTS.md` (agent-neutral) and a one-line `CLAUDE.md` that imports it, so the guidance stays agent-neutral.
 - **Agent workflow test** (`tests/e2e.test.ts`): discover via `info`, add a page, hit a broken link, fix it from the `check` finding, build. This is a scripted simulation of an agent, not an LLM in the loop.
-- **MCP deferred**: the CLI plus `--json` covers the same operations. Add MCP once the command surface is stable.
+- **MCP (0.4.0)**: `vage mcp` exposes read-only tools (`vage_info`, `vage_check`, `vage_pages`, `vage_links`) over stdio. Approving links and deploying stay CLI-only, so a person decides them. The SDK is an optional dependency (like `sharp`), so sites that don't use MCP don't install its web-server dependencies. Docs use `npx -p vagejs vage` so npx runs the project's vagejs and can never resolve an unrelated `vage` package. stdout carries the protocol, so `console.log` moves to stderr; a layout writing to `process.stdout` directly would still corrupt it.
 
 ## Phase 4: performance and accessibility
 
@@ -172,4 +172,4 @@ Still by design (documented): `vage.config.ts`, layouts and the optional Lightho
 
 ## Not implemented
 
-Bing Webmaster Tools API, Netlify/Vercel, CMS content sources, hreflang/multi-language, base paths, sitemap indexes, MCP server.
+Bing Webmaster Tools API, Netlify/Vercel, CMS content sources, hreflang/multi-language, base paths, sitemap indexes.

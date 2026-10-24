@@ -212,9 +212,10 @@ export const configSchema = z.strictObject({
       optimize: z.boolean().default(false).describe('Make resized WebP copies of images in page content and offer them with srcset. Needs "sharp" in the project (npm install --save-dev sharp).'),
       widths: z.array(z.number().int().min(16).max(8000)).min(1).max(8).default([480, 960, 1600]).describe("Widths to generate (never larger than the original)."),
       quality: z.number().int().min(1).max(100).default(75).describe("WebP quality."),
+      avif: z.boolean().default(false).describe("Also make AVIF copies (usually smaller than WebP, slower to make) and offer both with <picture>: browsers that support AVIF use it, others use WebP."),
       sizes: z.string().regex(/^[^<>"]+$/).default("(max-width: 48rem) 100vw, 48rem").describe('The sizes attribute: how wide images display, so browsers pick the right file.'),
     })
-    .default({ optimize: false, widths: [480, 960, 1600], quality: 75, sizes: "(max-width: 48rem) 100vw, 48rem" }),
+    .default({ optimize: false, widths: [480, 960, 1600], quality: 75, avif: false, sizes: "(max-width: 48rem) 100vw, 48rem" }),
   markdown: z
     .strictObject({
       html: z

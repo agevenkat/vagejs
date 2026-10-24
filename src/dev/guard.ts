@@ -42,7 +42,7 @@ export function allowed(url: string, publicDir: string, allowedFiles: Set<string
   if (!ext || ext === ".html") return true; // rendered pages (our middleware decides 200/404)
   if (allowedFiles.has(pathname)) return true;
   // Optimized images (images.optimize), served from the cache by the dev server.
-  if (/^\/_vage\/img\/[\w-]+\.webp$/.test(pathname)) return true;
+  if (/^\/_vage\/img\/[\w-]+\.(webp|avif)$/.test(pathname)) return true;
   // Generated files (seo.feeds, seo.markdownCopies) never exist on disk in dev. If a real file
   // sits at that path, it's a project source (e.g. /src/pages/about.md): Vite would serve it, so refuse.
   if (/^\/(?:[\w-]+\/)*(?:feed\.xml|[\w-]+\.md)$/.test(pathname)) {

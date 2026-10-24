@@ -10,7 +10,8 @@ import { imageSize } from "./images.js";
 
 /**
  * Opt-in image pipeline (images.optimize): resized WebP copies of the images used in
- * page content, offered to browsers with srcset. Needs the `sharp` package in the
+ * page content, offered to browsers with srcset; with images.avif, AVIF copies too,
+ * offered first through <picture>. Needs the `sharp` package in the
  * project. Results are cached in node_modules/.cache/vagejs/img, keyed by the file's
  * content and the settings, so unchanged images are never processed twice.
  */
@@ -20,17 +21,20 @@ export interface ImageOptions {
   widths: number[];
   quality: number;
   sizes: string;
+  avif?: boolean;
 }
 
 export interface Variants {
-  /** "url 480w, url 960w" */
+  /** "url 480w, url 960w" (WebP) */
   srcset: string;
+  /** The same widths as AVIF, when images.avif is on. */
+  avifSrcset?: string;
   /** Published path (e.g. "_vage/img/photo-ab12cd34-480.webp") -> cached file on disk. */
   files: Map<string, string>;
 }
 
-/** Turns an image into WebP at a given width. Injected in tests; sharp otherwise. */
-export type Resize = (input: Buffer, width: number, quality: number) => Promise<Buffer>;
+/** Turns an image into WebP (or AVIF) at a given width. Injected in tests; sharp otherwise. */
+export type Resize = (input: Buffer, width: number, quality: number, format?: "webp" | "avif") => Promise<Buffer>;
 
 const RASTER = /\.(jpe?g|png|webp)$/i;
 export const IMAGE_DIR = "_vage/img";
@@ -47,9 +51,14 @@ export async function sharpResize(root: string): Promise<Resize> {
   } catch {
     throw new VageError('images.optimize needs the "sharp" package. Install it with: npm install --save-dev sharp');
   }
-  const sharp = ((await import(pathToFileURL(resolved).href)) as { default: (input: Buffer) => { resize: (o: object) => { webp: (o: object) => { toBuffer: () => Promise<Buffer> } } } }).default;
+  type Encoder = { toBuffer: () => Promise<Buffer> };
+  const sharp = ((await import(pathToFileURL(resolved).href)) as { default: (input: Buffer) => { resize: (o: object) => { webp: (o: object) => Encoder; avif: (o?: object) => Encoder } } }).default;
   // rotate() applies EXIF orientation first, so phone photos aren't served sideways.
-  return (input, width, quality) => (sharp(input) as unknown as { rotate: () => ReturnType<typeof sharp> }).rotate().resize({ width, withoutEnlargement: true }).webp({ quality }).toBuffer();
+  // AVIF uses sharp's own default quality: its scale differs from WebP's, so images.quality would overshoot.
+  return (input, width, quality, format = "webp") => {
+    const resized = (sharp(input) as unknown as { rotate: () => ReturnType<typeof sharp> }).rotate().resize({ width, withoutEnlargement: true });
+    return (format === "avif" ? resized.avif() : resized.webp({ quality })).toBuffer();
+  };
 }
 
 /**
@@ -84,28 +93,35 @@ export async function imageVariants(src: string, root: string, options: ImageOpt
   fs.mkdirSync(dir, { recursive: true });
 
   const files = new Map<string, string>();
-  const entries: string[] = [];
-  for (const w of widths) {
-    const name = `${base}-${hash}-${w}.webp`;
-    const cached = path.join(dir, name);
-    if (!fs.existsSync(cached)) {
-      const tmp = `${cached}.${process.pid}.tmp`;
-      let data: Buffer;
-      try {
-        data = await resize(input, w, options.quality);
-      } catch (err) {
-        throw new VageError(`Couldn't optimize ${src}: ${(err as Error).message}. Replace the file, or turn off images.optimize.`);
+  const srcsets: Partial<Record<"webp" | "avif", string>> = {};
+  // Real widths, read from the WebP files; AVIF copies are resized the same way (vagejs can't read AVIF sizes).
+  const realWidth = new Map<number, number>();
+  for (const format of options.avif ? (["webp", "avif"] as const) : (["webp"] as const)) {
+    const entries: string[] = [];
+    for (const w of widths) {
+      const name = `${base}-${hash}-${w}.${format}`;
+      const cached = path.join(dir, name);
+      if (!fs.existsSync(cached)) {
+        const tmp = `${cached}.${process.pid}.tmp`;
+        let data: Buffer;
+        try {
+          data = await resize(input, w, options.quality, format);
+        } catch (err) {
+          throw new VageError(`Couldn't make a ${format === "avif" ? "AVIF" : "WebP"} copy of ${src}: ${(err as Error).message}. Replace the file, or turn off ${format === "avif" ? "images.avif" : "images.optimize"}.`);
+        }
+        fs.writeFileSync(tmp, data);
+        fs.renameSync(tmp, cached);
       }
-      fs.writeFileSync(tmp, data);
-      fs.renameSync(tmp, cached);
+      // Label with the file's real width (rotation can change it); publish each width once.
+      const actual = format === "webp" ? (imageSize(cached)?.width ?? w) : (realWidth.get(w) ?? w);
+      if (format === "webp") realWidth.set(w, actual);
+      if (entries.some((e) => e.endsWith(` ${actual}w`))) continue;
+      files.set(`${IMAGE_DIR}/${name}`, cached);
+      entries.push(`/${IMAGE_DIR}/${name} ${actual}w`);
     }
-    // Label with the file's real width (rotation can change it); publish each width once.
-    const actual = imageSize(cached)?.width ?? w;
-    if (entries.some((e) => e.endsWith(` ${actual}w`))) continue;
-    files.set(`${IMAGE_DIR}/${name}`, cached);
-    entries.push(`/${IMAGE_DIR}/${name} ${actual}w`);
+    if (entries.length) srcsets[format] = entries.join(", ");
   }
-  return entries.length ? { srcset: entries.join(", "), files } : undefined;
+  return srcsets.webp ? { srcset: srcsets.webp, avifSrcset: srcsets.avif, files } : undefined;
 }
 
 /** Image sources used in rendered Markdown, read with an HTML parser (so entities decode like the DOM's). */

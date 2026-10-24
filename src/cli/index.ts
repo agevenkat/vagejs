@@ -158,6 +158,39 @@ cli
   );
 
 cli
+  .command("new <kind> <name>", 'Start a page (vage new page pricing) or a post (vage new post "Our first launch") as a draft with valid frontmatter')
+  .option("--root <dir>", "Project root", { default: "." })
+  .option("--title <text>", "Page title (pages; default from the path)")
+  .option("--description <text>", "One or two sentences for search results")
+  .option("--under <folder>", "Posts: section folder under src/pages (default: blog)")
+  .option("--date <YYYY-MM-DD>", "Posts: datePublished (default: today)")
+  .option("--author <name>", "Posts: author (only written when given)")
+  .option("--slug <name>", "Posts: file name, for titles without Latin letters or digits")
+  .option("--json", "Print machine-readable JSON")
+  .action((kind: string, name: string, opts: { root: string; title?: unknown; description?: unknown; under?: unknown; date?: unknown; author?: unknown; slug?: unknown; json?: boolean }) =>
+    run(opts, async () => {
+      if (kind !== "page" && kind !== "post") throw new VageError(`Unknown kind "${kind}". Use vage new page <path> or vage new post "<title>".`);
+      const { createPage } = await import("./new.js");
+      // cac turns numeric values (--title 123) into numbers, so every option is read as text.
+      const text = (v: unknown) => (v === undefined ? undefined : String(v));
+      const created = createPage(opts.root, kind, String(name), { title: text(opts.title), description: text(opts.description), under: text(opts.under), date: text(opts.date), author: text(opts.author), slug: text(opts.slug) });
+      if (opts.json) return print({ ok: true, ...created });
+      console.log(`Created ${created.file} (draft) for ${created.route}`);
+      console.log("Preview it with npm start (drafts show there); remove `draft: true` to publish it, then run npm run check.");
+    }),
+  );
+
+cli
+  .command("mcp", "Run an MCP server over stdio so AI assistants can check this site (read-only tools; needs @modelcontextprotocol/sdk)")
+  .option("--root <dir>", "Project root", { default: "." })
+  .action((opts: { root: string }) =>
+    run({}, async () => {
+      const { startMcpServer } = await import("../mcp/server.js");
+      await startMcpServer(opts.root, { version, info: () => frameworkInfo(cli, version) });
+    }),
+  );
+
+cli
   .command("info", "Describe commands, config and frontmatter (use --json for agents)")
   .option("--json", "Print machine-readable JSON")
   .action((opts: { json?: boolean }) =>

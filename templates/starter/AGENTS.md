@@ -29,14 +29,16 @@ vagejs is tested on Windows on every change.
 
 `npx vage info --json` prints every command and option plus JSON Schemas for `vage.config.ts` and page frontmatter. Prefer it over guessing.
 
+**MCP server (optional):** `npx vage mcp` runs an MCP server over stdio with four read-only tools: `vage_info`, `vage_check`, `vage_pages` and `vage_links`. It needs `npm install --save-dev @modelcontextprotocol/sdk` in the project. For Claude Code, run in the project folder: `claude mcp add --transport stdio --scope project vagejs -- npx -p vagejs vage mcp` (saved in `.mcp.json`). Other assistants: `{ "mcpServers": { "vagejs": { "command": "npx", "args": ["-p", "vagejs", "vage", "mcp", "--root", "/absolute/path/to/the/site"] } } }`. `-p vagejs` makes npx run the vagejs installed in the project, and never a different package that happens to be called `vage`. Approving link domains and deploying are not MCP tools; they stay CLI commands the site owner approves. Layouts must not write to `process.stdout` directly: in MCP mode stdout carries the protocol (vagejs moves `console.log` to stderr).
+
 ## Recipes
 
-- **Add a page:** create `src/pages/<slug>.md` with `title` and `description` frontmatter; link to it as `/<slug>/` (trailing slash).
-- **Add a blog post:** `src/pages/blog/<slug>.md`; it appears on `/blog/` automatically (`src/layouts/blog.ts`). For Article data add `type: article`, plus `author` / `datePublished` only if the owner provided them.
+- **Add a page:** `npx vage new page <slug>` (folders allowed: `docs/setup`; options `--title`, `--description`) creates `src/pages/<slug>.md` as a draft with valid frontmatter, or create the file yourself with `title` and `description`. Link to it as `/<slug>/` (trailing slash). Remove `draft: true` when it's ready, then run `npm run check`.
+- **Add a blog post:** `npx vage new post "<Title>"` creates `src/pages/blog/<slug>.md` as a draft with `type: article` and today's `datePublished` (`--date`, `--under <folder>`, and `--author` only with a real name from the owner). It appears on `/blog/` automatically (`src/layouts/blog.ts`) once `draft: true` is removed.
 - **Add a layout:** `src/layouts/<name>.ts`, then `layout: <name>` in frontmatter. Keep `<html lang>`, one `<title>` and `</head>`.
 - **List pages (blog index, "latest posts", a sidebar):** in a layout, `collection(pages, { under: "/blog/", sort: "date" })` from `vagejs`. Never keep a hand-written list of pages.
 - **Give a layout its own frontmatter fields:** `export const frontmatter = z.object({ ... })` in the layout (`import { z } from "vagejs"`). Pages using it are then checked strictly: unknown or mistyped fields fail the build.
-- **Add an image:** put it in `public/images/` and write `![Describe the image](/images/name.jpg)`. Width and height are filled in from the file; write real alt text. For resized WebP copies, the owner can turn on `images: { optimize: true }` (needs `npm install --save-dev sharp`). Only images in page content are optimized, not images a layout writes.
+- **Add an image:** put it in `public/images/` and write `![Describe the image](/images/name.jpg)`. Width and height are filled in from the file; write real alt text. For resized WebP copies, the owner can turn on `images: { optimize: true }` (needs `npm install --save-dev sharp`), and `avif: true` for AVIF copies offered first through `<picture>`. Only images in page content are optimized, not images a layout writes.
 - **Order a menu or sidebar:** set `order:` (lower first) and optionally a short `navTitle:` in each page's frontmatter (shown as `p.label`), then build the menu in a layout with `tree(pages, "/docs/")`. For previous/next links in the same order use `neighbors(flatten(tree(pages, "/docs/")), page.route)`. For a flat section, `collection(pages, { under: "/docs/", sort: "order", includeIndex: true })` works too. `breadcrumbs(pages, page.route)` gives the trail from the home page.
 - **Add an RSS feed for the blog:** `seo: { feeds: [{ under: "/blog/" }] }` in `vage.config.ts` writes `/blog/feed.xml`, newest `datePublished` first (undated posts last, without a date).
 - **Help AI tools read the site:** `seo: { markdownCopies: true }` publishes a Markdown copy of every listed page (`/docs/cli/` becomes `/docs/cli.md`), converted from the page's `<main>`, so it contains exactly what the page shows (including content a layout builds from frontmatter), and `llms.txt` links to them. In layouts, add `data-vage-copy="skip"` to repeated extras such as share links or a call to action to leave them out of the copy. On Cloudflare, each copy gets a canonical `Link` header pointing to its page. `seo: { lastmod: "git" }` dates the sitemap from git history (needs full history in CI: `fetch-depth: 0`).
@@ -175,7 +177,7 @@ Off unless configured in `vage.config.ts` under `integrations`. Ask the site own
 
 ## Not implemented yet
 
-Bing Webmaster Tools API, Netlify/Vercel adapters, CMS content sources, multi-language sites, base paths, AVIF images. Do not use or document them as available. A passing `check` does not guarantee indexing, rankings or AI citations.
+Bing Webmaster Tools API, Netlify/Vercel adapters, CMS content sources, multi-language sites, base paths. Do not use or document them as available. A passing `check` does not guarantee indexing, rankings or AI citations.
 
 ## Favicon
 

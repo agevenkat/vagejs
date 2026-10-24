@@ -51,11 +51,11 @@ export async function startDevServer(root: string, options: ServeOptions = {}): 
     const urlPath = req.url ?? "/";
     const pathname = urlPath.split(/[?#]/)[0]!;
     try {
-      const optimized = /^\/_vage\/img\/([\w-]+\.webp)$/.exec(pathname);
+      const optimized = /^\/_vage\/img\/([\w-]+\.(webp|avif))$/.exec(pathname);
       if (optimized) {
         const file = path.join(cacheDir(root), optimized[1]!);
         if (!fs.existsSync(file)) return send(res, 404, plainPage("404 — Not found", `No optimized image at ${pathname}`));
-        res.setHeader("Content-Type", "image/webp");
+        res.setHeader("Content-Type", `image/${optimized[2]}`);
         return res.end(fs.readFileSync(file));
       }
       const isFeed = /^\/(?:[\w.-]+\/)*feed\.xml$/.test(pathname) && !pathname.includes("..");

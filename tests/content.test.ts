@@ -34,7 +34,7 @@ describe("loadConfig", () => {
     expect(await loadConfig("/nonexistent", loaderFor(undefined))).toEqual({
       lang: "en",
       redirects: {},
-      images: { optimize: false, widths: [480, 960, 1600], quality: 75, sizes: "(max-width: 48rem) 100vw, 48rem" },
+      images: { optimize: false, widths: [480, 960, 1600], quality: 75, avif: false, sizes: "(max-width: 48rem) 100vw, 48rem" },
       markdown: { html: "sanitize", inlineStyles: false },
       seo: { robots: { rules: [] }, feeds: [], lastmod: "frontmatter", markdownCopies: false, sitemap: true, llmsTxt: { full: false }, structuredData: {} },
       performance: {

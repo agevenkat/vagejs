@@ -17,7 +17,7 @@
 
 [Website](https://vagejs.com) · [Docs](https://vagejs.com/docs/) · [Use with AI assistants](https://vagejs.com/agents/) · [Changelog](https://vagejs.com/changelog/) · [Discussions](https://github.com/agevenkat/vagejs/discussions)
 
-<!-- Demo GIF goes here (assets/demo.gif): create a site, ask an AI assistant for a page, `npm run check` catches a broken link, `npm start`. -->
+<p align="center"><img src="https://raw.githubusercontent.com/agevenkat/vagejs/main/assets/demo.svg" alt="Terminal demo: create a vagejs site, install it, npm run check catches a broken link and names the file, the link is fixed, the check passes, and npm start runs the site." width="760"></p>
 
 - **Static by default**: plain HTML, no client JavaScript unless you add analytics.
 - **SEO built in**: `robots.txt`, `sitemap.xml`, `llms.txt`, canonical URLs, Open Graph and JSON-LD, generated from your pages.
@@ -81,7 +81,7 @@ Our plans start at …
 
 Save it as `src/pages/pricing.md` and it's served at `/pricing/`. `title` is required. `description`, `draft`, `noindex`, `canonical`, `image`, `type: article`, `author`, `datePublished` and `dateModified` are optional; see [`templates/starter/AGENTS.md`](templates/starter/AGENTS.md).
 
-Images in `public/` used as `![Alt text](/images/photo.jpg)` get their `width` and `height` from the file, so the page doesn't jump while loading. With `images: { optimize: true }` (and `npm install --save-dev sharp`), vagejs also makes resized WebP copies of images in page content and offers them with `srcset`.
+Images in `public/` used as `![Alt text](/images/photo.jpg)` get their `width` and `height` from the file, so the page doesn't jump while loading. With `images: { optimize: true }` (and `npm install --save-dev sharp`), vagejs also makes resized WebP copies of images in page content and offers them with `srcset`. Add `avif: true` for AVIF copies too, offered first through `<picture>` (usually smaller; slower to make). `vage audit` counts the copy browsers download, not the original.
 
 ### Navigation, feeds and AI extras
 
@@ -186,6 +186,15 @@ npx vage info --json    # commands, options, config and frontmatter JSON Schemas
 npx vage check --json   # findings with file, rule and fix hints
 ```
 
+Or let the assistant call vagejs directly over MCP. `npx vage mcp` runs an MCP server with read-only tools (`vage_info`, `vage_check`, `vage_pages`, `vage_links`); it needs the optional SDK:
+
+```bash
+npm install --save-dev @modelcontextprotocol/sdk
+claude mcp add --transport stdio --scope project vagejs -- npx -p vagejs vage mcp   # Claude Code, in the project folder
+```
+
+Other assistants: `{ "mcpServers": { "vagejs": { "command": "npx", "args": ["-p", "vagejs", "vage", "mcp", "--root", "/absolute/path/to/the/site"] } } }`. `-p vagejs` makes npx run the vagejs installed in the project, and never a different package that happens to be called `vage`. Approving link domains and deploying stay CLI commands for the site owner.
+
 ## Command reference
 
 ```bash
@@ -210,7 +219,7 @@ vage info     [--json]                            # commands + config/frontmatte
 
 ## Planned, not implemented
 
-Bing Webmaster Tools API, Netlify/Vercel adapters, CMS content sources, multi-language sites, base paths, sitemap indexes, MCP server, AVIF images.
+Bing Webmaster Tools API, Netlify/Vercel adapters, CMS content sources, multi-language sites, base paths, sitemap indexes.
 
 ## Security
 

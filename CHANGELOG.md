@@ -5,6 +5,20 @@
 ### Changed
 - Windows setup notes in the README and the starter's `AGENTS.md` (contributed by @chinmayee5599, #7).
 
+## 0.4.0 (2026-10-24)
+
+### Added
+- **MCP server.** `vage mcp` runs a Model Context Protocol server over stdio, so AI assistants can call vagejs directly. Four read-only tools: `vage_info` (commands, settings and page fields), `vage_check` (the same findings as `vage check`), `vage_pages` (published pages, drafts and pages that fail to render) and `vage_links` (outbound domains and whether they're approved). Approving link domains and deploying are deliberately not tools. The SDK is optional: install `@modelcontextprotocol/sdk` in the project to use it, and `vage mcp` explains this if it's missing. While it runs, anything the build prints goes to stderr, so stdout carries only the protocol. Set it up with `npx -p vagejs vage mcp`, which always runs the project's vagejs. A tool that fails (an invalid config, a broken layout) returns a readable error and the server keeps running.
+
+- **`vage new page` and `vage new post`.** `vage new page pricing` (or `docs/setup`) and `vage new post "Our first launch"` create a page with valid frontmatter, as a draft so placeholder text can't be published by accident. Posts get `type: article` and today's date; `--author` is written only when given. Never overwrites a page (including one that exists as `folder/index.md`), never writes through a symlinked folder, and takes `--slug` for titles without Latin letters.
+- **AVIF images.** `images: { optimize: true, avif: true }` also makes AVIF copies (same widths as the WebP ones) and offers them first through `<picture>`; browsers without AVIF use the WebP `srcset`. The dev server serves the AVIF copies too. The `<picture>` is added on the sanitizer's own output tree, so page content is never parsed twice.
+
+### Fixed
+- **`vage audit` counts the images browsers download.** Page-weight budgets used the original image even when vagejs served smaller WebP or AVIF copies. They now count the largest copy a browser would load (AVIF in `<picture>`, else the `srcset`).
+
+### Changed
+- The README opens with an animated demo and links to the website, docs and Discussions; `CONTRIBUTING.md`, issue forms and a pull request checklist were added to the repository.
+
 ## 0.3.5 (2026-10-24)
 
 Found by deploying a new site for real to Vercel, Cloudflare Workers and GitHub Pages.

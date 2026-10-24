@@ -3,7 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 import { frontmatterSchema, parseMarkdown, type Frontmatter } from "../content/markdown.js";
 import { contentImageSources, imageVariants, sharpResize, type Resize } from "../content/optimize.js";
-import { enhanceTrustedHtml, sanitizeHtml } from "../content/sanitize.js";
+import { enhanceTrustedHtml, sanitizeHtml, type ImageVariant } from "../content/sanitize.js";
 import type { ModuleLoader, SiteConfig } from "./config.js";
 import { VageError } from "./errors.js";
 import { clonePlain } from "./clone.js";
@@ -66,14 +66,14 @@ export async function renderPage(options: {
   const { frontmatter, body } = parsed;
   const publicDir = path.join(root, "public");
   const assets = new Map<string, string>();
-  let variants: Map<string, { srcset: string; sizes: string }> | undefined;
+  let variants: Map<string, ImageVariant> | undefined;
   if (site.images.optimize) {
     const resize = options.resize ?? (await sharpResize(root));
     variants = new Map();
     for (const src of contentImageSources(parsed.html)) {
       const v = await imageVariants(src, root, site.images, resize);
       if (!v) continue;
-      variants.set(src, { srcset: v.srcset, sizes: site.images.sizes });
+      variants.set(src, { srcset: v.srcset, sizes: site.images.sizes, avifSrcset: v.avifSrcset });
       for (const [k, f] of v.files) assets.set(k, f);
     }
   }

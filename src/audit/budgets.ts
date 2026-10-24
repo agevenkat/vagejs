@@ -72,11 +72,30 @@ export function measurePages(outDir: string, pages: { route: string; outFile: st
     }
     for (const l of doc.querySelectorAll('link[rel="stylesheet"]')) add(l.getAttribute("href"), "css", route);
     for (const l of doc.querySelectorAll('link[rel="preload"][as="font"]')) add(l.getAttribute("href"), "font", route);
-    for (const img of doc.querySelectorAll("img")) add(img.getAttribute("src"), "image", route);
+    for (const img of doc.querySelectorAll("img")) add(downloadedImage(img), "image", route);
 
     weight.total = Object.values(weight.bytes).reduce((a, b) => a + b, 0);
     return weight;
   });
+}
+
+/**
+ * The file a browser actually downloads for an <img>: the first <source> of its
+ * <picture> (AVIF from images.avif), else its srcset (WebP), else src. With several
+ * widths, the largest counts: what a wide, high-density screen loads.
+ */
+function downloadedImage(img: ReturnType<typeof parse>): string | undefined {
+  const source = img.parentNode?.rawTagName?.toLowerCase() === "picture" ? img.parentNode.querySelector("source[srcset]") : null;
+  const srcset = source?.getAttribute("srcset") ?? img.getAttribute("srcset");
+  if (!srcset) return img.getAttribute("src");
+  let best: { url: string; size: number } | undefined;
+  for (const entry of srcset.split(",")) {
+    const [url, descriptor = "1x"] = entry.trim().split(/\s+/);
+    // "960w" (width) or "2x" (density): either way, the biggest number is the biggest file.
+    const size = Number(/^([\d.]+)[wx]$/.exec(descriptor)?.[1] ?? 0);
+    if (url && (!best || size > best.size)) best = { url, size };
+  }
+  return best?.url ?? img.getAttribute("src");
 }
 
 const BUDGET_KEYS: [keyof SiteConfig["performance"]["budgets"], ResourceKind | "total"][] = [

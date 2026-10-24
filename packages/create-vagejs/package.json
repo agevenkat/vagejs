@@ -1,6 +1,6 @@
 {
   "name": "create-vagejs",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "description": "Create a new vagejs website: npm create vagejs@latest my-site",
   "keywords": [
     "vagejs",
@@ -22,7 +22,7 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
-    "vagejs": "0.3.5"
+    "vagejs": "0.4.0"
   },
   "publishConfig": {
     "access": "public"

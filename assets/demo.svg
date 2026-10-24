@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 425" width="880" height="425" role="img" aria-label="Terminal demo: create a vagejs site, install it, npm run check catches a broken link with the file name, the link is fixed, the check passes, and npm start runs the site.">
+<title>vagejs demo: a broken link caught before launch</title>
+<style>text{font:14px ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;white-space:pre;opacity:0}@keyframes l0{0%,2.35%{opacity:0}2.95%,96.0%{opacity:1}100%{opacity:0}}.l0{animation:l0 17.0s linear infinite}@keyframes l1{0%,7.65%{opacity:0}8.25%,96.0%{opacity:1}100%{opacity:0}}.l1{animation:l1 17.0s linear infinite}@keyframes l2{0%,12.94%{opacity:0}13.54%,96.0%{opacity:1}100%{opacity:0}}.l2{animation:l2 17.0s linear infinite}@keyframes l3{0%,19.41%{opacity:0}20.01%,96.0%{opacity:1}100%{opacity:0}}.l3{animation:l3 17.0s linear infinite}@keyframes l4{0%,25.88%{opacity:0}26.48%,96.0%{opacity:1}100%{opacity:0}}.l4{animation:l4 17.0s linear infinite}@keyframes l5{0%,32.94%{opacity:0}33.54%,96.0%{opacity:1}100%{opacity:0}}.l5{animation:l5 17.0s linear infinite}@keyframes l6{0%,38.24%{opacity:0}38.84%,96.0%{opacity:1}100%{opacity:0}}.l6{animation:l6 17.0s linear infinite}@keyframes l7{0%,39.41%{opacity:0}40.01%,96.0%{opacity:1}100%{opacity:0}}.l7{animation:l7 17.0s linear infinite}@keyframes l8{0%,41.18%{opacity:0}41.78%,96.0%{opacity:1}100%{opacity:0}}.l8{animation:l8 17.0s linear infinite}@keyframes l9{0%,49.41%{opacity:0}50.01%,96.0%{opacity:1}100%{opacity:0}}.l9{animation:l9 17.0s linear infinite}@keyframes l10{0%,56.47%{opacity:0}57.07%,96.0%{opacity:1}100%{opacity:0}}.l10{animation:l10 17.0s linear infinite}@keyframes l11{0%,61.18%{opacity:0}61.78%,96.0%{opacity:1}100%{opacity:0}}.l11{animation:l11 17.0s linear infinite}@keyframes l12{0%,68.24%{opacity:0}68.84%,96.0%{opacity:1}100%{opacity:0}}.l12{animation:l12 17.0s linear infinite}@keyframes l13{0%,73.53%{opacity:0}74.13%,96.0%{opacity:1}100%{opacity:0}}.l13{animation:l13 17.0s linear infinite}@keyframes l14{0%,74.71%{opacity:0}75.31%,96.0%{opacity:1}100%{opacity:0}}.l14{animation:l14 17.0s linear infinite}@media (prefers-reduced-motion:reduce){text{animation:none!important;opacity:1}}</style>
+<rect width="880" height="425" rx="12" fill="#0a0d19"/>
+<rect x="0.5" y="0.5" width="879" height="424" rx="12" fill="none" stroke="#2a2f4a"/>
+<circle cx="24" cy="22" r="6" fill="#ff5f57"/><circle cx="44" cy="22" r="6" fill="#febc2e"/><circle cx="64" cy="22" r="6" fill="#28c840"/>
+<text x="440" y="26" text-anchor="middle" fill="#7f86a6" style="opacity:1;font-size:12px">~/projects</text>
+<text class="l0" x="24" y="56" fill="#eef0fa"><tspan fill="#8b93ff">$ </tspan>npm create vagejs@latest my-site</text>
+<text class="l1" x="24" y="79" fill="#86efac">Created ~/my-site</text>
+<text class="l2" x="24" y="102" fill="#eef0fa"><tspan fill="#8b93ff">$ </tspan>cd my-site &amp;&amp; npm install</text>
+<text class="l3" x="24" y="125" fill="#a3a9c4">added 80 packages, and audited 81 packages in 6s</text>
+<text class="l4" x="24" y="148" fill="#7f86a6"># Your AI assistant adds a pricing page, with a typo in one link</text>
+<text class="l5" x="24" y="171" fill="#eef0fa"><tspan fill="#8b93ff">$ </tspan>npm run check</text>
+<text class="l6" x="24" y="194" fill="#fca5a5">error   link-broken   / (src/pages/index.md)</text>
+<text class="l7" x="24" y="217" fill="#a3a9c4">        Link to &quot;/pricng/&quot; does not match any page or file.</text>
+<text class="l8" x="24" y="240" fill="#fca5a5">Checked 6 page(s): 1 error(s), 0 warning(s).</text>
+<text class="l9" x="24" y="263" fill="#7f86a6"># The check named the file, so the assistant fixes the link</text>
+<text class="l10" x="24" y="286" fill="#eef0fa"><tspan fill="#8b93ff">$ </tspan>npm run check</text>
+<text class="l11" x="24" y="309" fill="#86efac">Checked 6 page(s): 0 error(s), 0 warning(s).</text>
+<text class="l12" x="24" y="332" fill="#eef0fa"><tspan fill="#8b93ff">$ </tspan>npm start</text>
+<text class="l13" x="24" y="355" fill="#86efac">vagejs dev server running at http://localhost:5173/</text>
+<text class="l14" x="24" y="378" fill="#a3a9c4">  same server: http://[::1]:5173/ (use this if the browser shows HTTP 431)</text>
+</svg>

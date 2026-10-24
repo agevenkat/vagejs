@@ -7,6 +7,7 @@ import { JSDOM } from "jsdom";
 import { build } from "../src/core/build.js";
 import { imageVariants, sharpResize, type Resize } from "../src/content/optimize.js";
 import { startDevServer } from "../src/dev/server.js";
+import { measurePages } from "../src/audit/budgets.js";
 import { copyFixture, write } from "./helpers.js";
 
 const REPO = path.resolve(".");
@@ -92,6 +93,18 @@ describe("optimized images in the dev server", () => {
     expect(res.headers.get("content-type")).toBe("image/webp");
     expect((await fetch(`${url}/_vage/img/nope-0000000000-1.webp`)).status).toBe(404);
   });
+
+  it("serves the AVIF copies too (review finding: they returned 404 in dev)", async () => {
+    const root = await site();
+    write(root, "vage.config.ts", 'export default { site: "https://fixture.example", title: "Fixture Site", images: { optimize: true, avif: true, widths: [400, 800, 1600] } };');
+    server = await startDevServer(root, { port: 0 });
+    const url = `http://localhost:${(server.httpServer!.address() as { port: number }).port}`;
+    const html = await (await fetch(`${url}/gallery/`)).text();
+    const avif = /<source type="image\/avif" srcset="([^ ]+) /.exec(html)![1]!;
+    const res = await fetch(url + avif);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/avif");
+  });
 });
 
 describe("image pipeline review fixes", () => {
@@ -134,7 +147,7 @@ describe("image pipeline review fixes", () => {
     const root = await site();
     fs.writeFileSync(path.join(root, "public/images/broken.png"), Buffer.concat([Buffer.from("89504e470d0a1a0a0000000d49484452000003e8000001f40806000000", "hex")]));
     write(root, "src/pages/broken.md", "---\ntitle: Broken\ndescription: Broken.\n---\n# Broken\n\n![Broken](/images/broken.png)\n");
-    await expect(build(root)).rejects.toThrow(/Couldn't optimize \/images\/broken\.png/);
+    await expect(build(root)).rejects.toThrow(/Couldn't make a WebP copy of \/images\/broken\.png/);
   });
 });
 
@@ -163,5 +176,84 @@ describe("image pipeline re-review fixes", () => {
       const meta = await sharp(v!.files.get(url!.slice(1))!).metadata();
       expect(`${meta.width}w`).toBe(w);
     }
+  });
+});
+
+describe("AVIF copies (images.avif)", () => {
+  async function avifSite() {
+    const root = await site();
+    write(root, "vage.config.ts", 'export default { site: "https://fixture.example", title: "Fixture Site", images: { optimize: true, avif: true, widths: [400, 800, 1600] } };');
+    return root;
+  }
+
+  it("offers AVIF first through <picture>, with the same widths as the WebP fallback", async () => {
+    const root = await avifSite();
+    await build(root);
+    const doc = new JSDOM(fs.readFileSync(path.join(root, "dist/gallery/index.html"), "utf8")).window.document;
+    const photo = doc.querySelector('img[alt="A blue photo"]')!;
+    const picture = photo.parentElement!;
+    expect(picture.nodeName).toBe("PICTURE");
+    const source = picture.querySelector("source")!;
+    expect(source.getAttribute("type")).toBe("image/avif");
+    expect(source.getAttribute("sizes")).toBe(photo.getAttribute("sizes"));
+    const avif = source.getAttribute("srcset")!.split(", ");
+    const webp = photo.getAttribute("srcset")!.split(", ");
+    expect(avif.map((e) => e.split(" ")[1])).toEqual(webp.map((e) => e.split(" ")[1]));
+    for (const entry of avif) {
+      const [url, w] = entry.split(" ");
+      expect(url).toMatch(/\.avif$/);
+      const meta = await sharp(path.join(root, "dist", url!)).metadata();
+      expect([meta.format, `${meta.width}w`]).toEqual(["heif", w]);
+    }
+    // Images vagejs didn't optimize stay plain <img>.
+    expect(doc.querySelector('img[alt="Remote"]')!.parentElement!.nodeName).not.toBe("PICTURE");
+  });
+
+  it("keeps sanitizing page content on the AVIF path", async () => {
+    const root = await avifSite();
+    write(root, "src/pages/gallery.md", '---\ntitle: Gallery\ndescription: Photos.\n---\n# Gallery\n\n![A blue photo](/images/photo.jpg)\n\n<img src="/images/photo.jpg" onerror="alert(1)">\n\n<script>alert(2)</script>\n\n<a href="javascript:alert(3)">x</a>\n');
+    await build(root);
+    const html = fs.readFileSync(path.join(root, "dist/gallery/index.html"), "utf8");
+    const main = /<body[\s\S]*<\/body>/.exec(html)![0];
+    expect(main).toContain('type="image/avif"');
+    expect(main).not.toMatch(/onerror|alert\(|javascript:/);
+  });
+
+  it("adds no <picture> when AVIF is off", async () => {
+    const root = await site();
+    await build(root);
+    expect(fs.readFileSync(path.join(root, "dist/gallery/index.html"), "utf8")).not.toContain("<picture");
+  });
+});
+
+describe("audit counts the images browsers download", () => {
+  const imageBytes = (root: string) => measurePages(path.join(root, "dist"), [{ route: "/gallery/", outFile: "gallery/index.html" }])[0]!.bytes.image;
+  const size = (root: string, url: string) => fs.statSync(path.join(root, "dist", url)).size;
+  const largest = (srcset: string) => srcset.split(", ").at(-1)!.split(" ")[0]!;
+
+  it("counts the largest WebP copy, not the original", async () => {
+    const root = await site();
+    await build(root);
+    const doc = new JSDOM(fs.readFileSync(path.join(root, "dist/gallery/index.html"), "utf8")).window.document;
+    const photo = doc.querySelector('img[alt="A blue photo"]')!;
+    const logo = doc.querySelector('img[alt="Logo"]')!;
+    const logoBytes = logo.getAttribute("srcset") ? size(root, largest(logo.getAttribute("srcset")!)) : size(root, logo.getAttribute("src")!);
+    expect(imageBytes(root)).toBe(size(root, largest(photo.getAttribute("srcset")!)) + logoBytes);
+    expect(imageBytes(root)).not.toBe(size(root, "/images/photo.jpg") + logoBytes);
+  });
+
+  it("counts the AVIF copy when images.avif is on", async () => {
+    const root = await site();
+    write(root, "vage.config.ts", 'export default { site: "https://fixture.example", title: "Fixture Site", images: { optimize: true, avif: true, widths: [400, 800, 1600] } };');
+    await build(root);
+    const doc = new JSDOM(fs.readFileSync(path.join(root, "dist/gallery/index.html"), "utf8")).window.document;
+    const counted = [...doc.querySelectorAll("img")]
+      .filter((img) => !/^https?:/.test(img.getAttribute("src") ?? ""))
+      .map((img) => {
+        const source = img.parentElement!.nodeName === "PICTURE" ? img.parentElement!.querySelector("source")!.getAttribute("srcset") : img.getAttribute("srcset");
+        return size(root, source ? largest(source) : img.getAttribute("src")!);
+      });
+    expect(imageBytes(root)).toBe(counted.reduce((a, b) => a + b, 0));
+    expect(doc.querySelector("source")!.getAttribute("srcset")).toMatch(/\.avif /);
   });
 });

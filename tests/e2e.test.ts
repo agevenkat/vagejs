@@ -64,6 +64,10 @@ describe("vage CLI (packed package)", () => {
     }
 
     // A fresh starter passes checks; the only warning is the placeholder site URL.
+    // The MCP SDK is optional: without it, `vage mcp` explains how to add it instead of crashing.
+    const mcp = npxSpawn(["vage", "mcp"], { cwd: site, encoding: "utf8", input: "" });
+    expect(mcp.status).toBe(1);
+    expect(mcp.stderr).toMatch(/npm install --save-dev @modelcontextprotocol\/sdk/);
     const checked = npxSpawn(["vage", "check", "--json"], { cwd: site, encoding: "utf8" });
     expect(checked.status, checked.stdout).toBe(0);
     expect(JSON.parse(checked.stdout)).toMatchObject({ ok: true, errors: 0, warnings: 1, findings: [{ rule: "config" }] });
@@ -144,7 +148,7 @@ describe("vage CLI (packed package)", () => {
     expect(res.stdout).toMatch(/npm install\n {2}npm start\n/); // next steps point to the command that opens the browser
     const pkg = JSON.parse(fs.readFileSync(path.join(work, "fresh-site", "package.json"), "utf8"));
     expect(pkg.scripts.start).toBe("vage dev --open");
-    expect(pkg.devDependencies.vagejs).toBe("^0.3.5");
+    expect(pkg.devDependencies.vagejs).toBe("^0.4.0");
     expect(spawnSync(process.execPath, [createBin(runner)], { encoding: "utf8" }).stderr).toMatch(/Usage: npm create vagejs@latest/);
   }, 300_000);
 
@@ -194,6 +198,6 @@ describe("vage CLI (packed package)", () => {
     const help = vage(["--help"], work);
     expect(help.status).toBe(0);
     for (const cmd of ["create", "dev", "build", "check", "audit", "preview", "info", "deploy:github", "deploy", "connect", "disconnect", "report", "guidelines", "indexnow"]) expect(help.stdout).toContain(cmd);
-    expect(vage(["--version"], work).stdout).toContain("0.3.5");
+    expect(vage(["--version"], work).stdout).toContain("0.4.0");
   });
 });
