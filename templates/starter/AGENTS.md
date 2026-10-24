@@ -4,15 +4,6 @@ This website uses **vagejs** (pre-release). Only the features listed here exist 
 
 ## Commands
 
-## Windows
-
-vagejs is tested on Windows on every change.
-
-- Install Node.js **22.12 or newer** before running the project commands. After installation, open a new PowerShell or Command Prompt window and verify the installation with `node --version` and `npm --version`.
-- The `npm` commands in this file work in both **PowerShell** and **Command Prompt**.
-- Windows uses **CRLF** line endings by default. vagejs handles CRLF files correctly, so do not manually convert line endings just to run the project.
-- If the browser shows **HTTP 431** when opening `localhost`, run `npm run dev` and open the direct `[::1]` or `127.0.0.1` address printed by the command instead. This can avoid cookies from other local projects being sent to `localhost`.
-
 | Command           | What it does                                              |
 | ----------------- | --------------------------------------------------------- |
 | `npm run dev`     | Dev server with live reload. Prints the local URL and the same server's direct address (e.g. `http://[::1]:5173/`): if a browser shows HTTP 431 on localhost (too many cookies from other projects), use the direct address. Use this one yourself; it doesn't open a browser. |
@@ -24,6 +15,15 @@ vagejs is tested on Windows on every change.
 
 Add `--json` to `npx vage build`, `check` or `audit` for machine-readable output (`{ ok: false, error }` on failure).
 Run `npm run check` after every change and fix all errors before finishing.
+
+## Windows
+
+vagejs is tested on Windows on every change.
+
+- Node.js **22.12 or newer** is needed. Check with `node --version` in a new PowerShell or Command Prompt window.
+- The `npm` and `npx` commands in this file work in PowerShell and Command Prompt. In Command Prompt, leave out any `# …` notes after a command: it doesn't treat `#` as a comment.
+- Windows usually saves files with **CRLF** line endings. vagejs handles them; don't convert line endings.
+- If a browser shows **HTTP 431** on `localhost`, open the direct `[::1]` or `127.0.0.1` address that `npm start` and `npm run dev` print.
 
 ## Machine-readable reference
 
