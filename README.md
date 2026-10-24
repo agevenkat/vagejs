@@ -36,6 +36,15 @@ cd my-site
 npm install
 npm start
 ```
+### Windows
+
+
+vagejs works on Windows and is tested on Windows on every change.
+
+- **Node.js:** Install Node.js **22.12 or newer** before creating a project. After installing, open a new PowerShell or Command Prompt window and verify it with `node --version` and `npm --version`.
+- **PowerShell or Command Prompt:** The commands in this README work in both PowerShell and Command Prompt. If you use PowerShell, run the commands directly as shown. If you use Command Prompt, the same `npm` commands apply.
+- **Line endings:** Windows normally uses CRLF line endings. vagejs handles CRLF files correctly, so you do not need to convert files to LF manually.
+- **HTTP 431 in the browser:** If `npm start` opens a browser page that returns HTTP 431, run `npm run dev` instead. It prints the local server address; open the direct `[::1]` or `127.0.0.1` address shown in the terminal. This can avoid cookies from other local projects being sent to `localhost`.
 
 `npm start` opens the site in your browser. Edit `src/pages/index.md` and the page reloads. (`npm run dev` does the same without opening a browser, and prints the address.)
 
